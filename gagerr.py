@@ -11,6 +11,7 @@ def point_distance(point1, point2):
 
 #TODO: Need to confrim the data cell base
 data_cell_base = 'A18'
+template_data_offset = 3
 
 st.title('GAGERR')
 
@@ -105,7 +106,7 @@ if data is not None:
         wb_data = load_workbook('data.cvs')
         ws_data = wb_data.active
         st.success('Data uploaded successfully')
-        # Fill into template3
+        # Fill into template
         with st.form(key='data_form'):
             st.write('Input First Points Location')
             point_loc = st.text_area('First Points Location: A18')
@@ -129,12 +130,20 @@ if data is not None:
             # TODO: Match the point in template
 
             while point is not None:
-                template_ws[]    
+                data_base_point = template_ws[data_cell_base]   
 
                 # TODO: Fill the data into the template, 9 points in a row
                 for i in range(10):
                     for j in range(9):
                         # TODO: Use the offset to fill the data
+                        if(j > 5):
+                            #TODO:
+                            offset_cell = data_base_point.offset(row=i, column=j+template_data_offset * 2)
+                        elif (j > 2):
+                            #TODO:
+                            offset_cell = data_base_point.offset(row=i, column=j+template_data_offset)
+                        else:
+                            offset_cell = data_base_point.offset(row=i, column=j)
 
                 # TODO: Record the row number
 
