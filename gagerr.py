@@ -8,6 +8,10 @@ def get_row_num(cell):
 
 def point_distance(point1, point2):
     return get_row_num(point2) - get_row_num(point1) + 1
+
+#TODO: Need to confrim the data cell base
+data_cell_base = 'A18'
+
 st.title('GAGERR')
 
 # Upload RFQ then create new template 
@@ -98,9 +102,44 @@ if rfq is not None:
 data = st.file_uploader("Upload Data")
 if data is not None:
     try:
-        df = pd.read_csv(data)
+        wb_data = load_workbook('data.cvs')
+        ws_data = wb_data.active
         st.success('Data uploaded successfully')
-        # Fill into template
+        # Fill into template3
+        with st.form(key='data_form'):
+            st.write('Input First Points Location')
+            point_loc = st.text_area('First Points Location: A18')
+
+            data_offset = st.text_area('Distance to Absoulte Value: 3')
+
+            points_offset = st.text_area('Distance to Next Point: 9')
+                        
+            submit_button = st.form_submit_button(label='Submit')
+        if submit_button:
+            st.write('Filling Data into Template')
+            # Get First Points
+            first_point = point_loc
+            offset = int(data_offset)
+            points_offset = int(points_offset)
+            # Fill data into template
+            point = ws_data[first_point]
+            
+            template_wb = load_workbook('template.xlsx')
+            # TODO: Fill up one sheet first then move to the next sheet
+            # TODO: Match the point in template
+
+            while point is not None:
+                template_ws[]    
+
+                # TODO: Fill the data into the template, 9 points in a row
+                for i in range(10):
+                    for j in range(9):
+                        # TODO: Use the offset to fill the data
+
+                # TODO: Record the row number
+
+            wb.save('filled_template.xlsx')
+            st.write('Data filled successfully')
 
     except Exception as e:
         st.error(e)
