@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import re
+import re, io
 from openpyxl import load_workbook
 
 def get_row_num(cell):
@@ -48,20 +48,23 @@ if rfq is not None:
         st.write('Create New Template')
 
         # Get Size Points
+
+
+        wb = load_workbook(rfq)
+        ws = wb.active
+        template = load_workbook('./template.xlsx')
+        template_ws = template.active
+        original_sheet = template.worksheets[0]
+
         size_points = points_size.split('-')
         size_num = point_distance(size_points[0], size_points[1])
         size = []
-
-        wb = load_workbook('rfq.xlsx')
-        ws = wb.active
-        template = load_workbook('template.xlsx')
-
         for size_point in ws[size_points[0]:size_points[1]]:
             for cell in size_point:
                 size.append(cell.value)
-                original_sheet = template.active
+                
                 new_sheet = template.copy_worksheet(original_sheet)
-                new_sheet.title = cell.value
+                new_sheet.title = 'Size' + str(cell.value)
             # TODO: Fill the limits and names into the new sheet
 
         # Get Form Points
@@ -72,9 +75,8 @@ if rfq is not None:
         for form_point in ws[form_points[0]:form_points[1]]:
             for cell in form_point:
                 form.append(cell.value)
-                original_sheet = template.active
                 new_sheet = template.copy_worksheet(original_sheet)
-                new_sheet.title = cell.value
+                new_sheet.title = 'Form' + str(cell.value)
 
         # Get Cruve Points
         cruve_points = points_cruve.split('-')
@@ -84,9 +86,8 @@ if rfq is not None:
         for cruve_point in ws[cruve_points[0]:cruve_points[1]]:
             for cell in cruve_point:
                 cruve.append(cell.value)
-                original_sheet = template.active
                 new_sheet = template.copy_worksheet(original_sheet)
-                new_sheet.title = cell.value
+                new_sheet.title = 'Curv' + str(cell.value)
         
 
         # for i in range(size_num):
@@ -96,6 +97,10 @@ if rfq is not None:
 
 
         st.write('Template created successfully')
+        output = io.BytesIO()
+        template.save(output)
+        output.seek(0)
+        st.download_button(label='Download Template', data=output, file_name='template.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         st.write('Upload Data')
   
 
@@ -125,7 +130,7 @@ if data is not None:
             # Fill data into template
             point = ws_data[first_point]
             
-            template_wb = load_workbook('template.xlsx')
+            template_wb = load_workbook(output)
             # TODO: Fill up one sheet first then move to the next sheet
             # TODO: Match the point in template
 
