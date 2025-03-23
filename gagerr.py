@@ -40,6 +40,8 @@ if rfq is not None:
         points_form = st.text_area('Form Points Location: A18-A30')
 
         points_cruve = st.text_area('Cruve Points Location: A18-A30')
+
+        limit_offset = st.text_area('Distance to tolerance, no merged cells are allowed: 4')
                     
         submit_button = st.form_submit_button(label='Submit')
 
@@ -47,14 +49,15 @@ if rfq is not None:
     if submit_button:
         st.write('Create New Template')
 
-        # Get Size Points
+        # Get names
+        operator_name = operator_names.split(',')
 
 
         wb = load_workbook(rfq)
         ws = wb.active
         template = load_workbook('./template.xlsx')
-        template_ws = template.active
-        original_sheet = template.worksheets[0]
+        # template_ws = template.active
+        original_sheet = template.worksheets[1]
 
         size_points = points_size.split('-')
         size_num = point_distance(size_points[0], size_points[1])
@@ -65,8 +68,17 @@ if rfq is not None:
                 
                 new_sheet = template.copy_worksheet(original_sheet)
                 new_sheet.title = 'Size' + str(cell.value)
-            # TODO: Fill the limits and names into the new sheet
+                # TODO: Fill the limits and names into the new sheet
+                # Fill the names
+                new_sheet['E10'] = operator_name[0]
+                new_sheet['K10'] = operator_name[1]
+                new_sheet['Q10'] = operator_name[2]
 
+                # Fill the limits
+                limit_value = ws.cell(row=cell.row, column=cell.column + int(limit_offset)).value
+                new_sheet['E8'] = limit_value
+                clean_limit = limit_value.replace("±", "")
+                new_sheet['I30'] = float(clean_limit) * 2
         # Get Form Points
         form_points = points_form.split('-')
         form_num = point_distance(form_points[0], form_points[1])
@@ -77,6 +89,16 @@ if rfq is not None:
                 form.append(cell.value)
                 new_sheet = template.copy_worksheet(original_sheet)
                 new_sheet.title = 'Form' + str(cell.value)
+                
+                new_sheet['E10'] = operator_name[0]
+                new_sheet['K10'] = operator_name[1]
+                new_sheet['Q10'] = operator_name[2]
+
+                # Fill the limits
+                limit_value = ws.cell(row=cell.row, column=cell.column + int(limit_offset)).value
+                new_sheet['E8'] = limit_value
+                clean_limit = limit_value.replace("±", "")
+                new_sheet['I30'] = float(clean_limit) * 2
 
         # Get Cruve Points
         cruve_points = points_cruve.split('-')
@@ -88,6 +110,16 @@ if rfq is not None:
                 cruve.append(cell.value)
                 new_sheet = template.copy_worksheet(original_sheet)
                 new_sheet.title = 'Curv' + str(cell.value)
+                
+                new_sheet['E10'] = operator_name[0]
+                new_sheet['K10'] = operator_name[1]
+                new_sheet['Q10'] = operator_name[2]
+
+                # Fill the limits
+                limit_value = ws.cell(row=cell.row, column=cell.column + int(limit_offset)).value
+                new_sheet['E8'] = limit_value
+                clean_limit = limit_value.replace("±", "")
+                new_sheet['I30'] = float(clean_limit) * 2
         
 
         # for i in range(size_num):
