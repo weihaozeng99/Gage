@@ -2,15 +2,21 @@ import streamlit as st
 import pandas as pd
 import re, io
 from openpyxl import load_workbook
+from openpyxl.utils import column_index_from_string
+
+import traceback
 
 def get_row_num(cell):
     return int(re.search(r'\d+', cell).group())
+
+def get_column_num(cell):
+    return column_index_from_string(re.search(r'[A-Za-z]+', cell).group())
 
 def point_distance(point1, point2):
     return get_row_num(point2) - get_row_num(point1) + 1
 
 #TODO: Need to confrim the data cell base
-data_cell_base = 'A18'
+data_cell_base = 'C13'
 template_data_offset = 3
 
 st.title('GAGERR')
@@ -34,6 +40,8 @@ if rfq is not None:
     with st.form(key='rfq_form'):
         st.write('Input Operator names')
         operator_names = st.text_area('Operator Names: A, B, C')
+        st.write('Input Part Number')
+        part_num = st.text_area('Part Number:')
         st.write('Input Points and Limits')
         points_size = st.text_area('Size Points Location: A18-A30')
 
@@ -67,8 +75,9 @@ if rfq is not None:
                 size.append(cell.value)
                 
                 new_sheet = template.copy_worksheet(original_sheet)
-                new_sheet.title = 'Size' + str(cell.value)
-                # TODO: Fill the limits and names into the new sheet
+                new_sheet.title = 'S' + str(cell.value)
+                # Fill the part number
+                new_sheet['E6'] = part_num
                 # Fill the names
                 new_sheet['E10'] = operator_name[0]
                 new_sheet['K10'] = operator_name[1]
@@ -88,7 +97,7 @@ if rfq is not None:
             for cell in form_point:
                 form.append(cell.value)
                 new_sheet = template.copy_worksheet(original_sheet)
-                new_sheet.title = 'Form' + str(cell.value)
+                new_sheet.title = 'F' + str(cell.value)
                 
                 new_sheet['E10'] = operator_name[0]
                 new_sheet['K10'] = operator_name[1]
@@ -109,7 +118,7 @@ if rfq is not None:
             for cell in cruve_point:
                 cruve.append(cell.value)
                 new_sheet = template.copy_worksheet(original_sheet)
-                new_sheet.title = 'Curv' + str(cell.value)
+                new_sheet.title = 'C' + str(cell.value)
                 
                 new_sheet['E10'] = operator_name[0]
                 new_sheet['K10'] = operator_name[1]
@@ -129,50 +138,72 @@ if rfq is not None:
 
 
         st.write('Template created successfully')
-        output = io.BytesIO()
-        template.save(output)
-        output.seek(0)
-        st.download_button(label='Download Template', data=output, file_name='template.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        template.save('temp.xlsx')
+        # output = io.BytesIO()
+        # template.save(output)
+
+        # output.seek(0)
+        # st.download_button(label='Download Template', data=output, file_name='template.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         st.write('Upload Data')
   
 
 # Upload Data then fill into template
-data = st.file_uploader("Upload Data")
+data = st.file_uploader("Upload Data, .xlsx files only. Remove all ROC points")
 if data is not None:
     try:
-        wb_data = load_workbook('data.cvs')
+        wb_data = load_workbook(data)
         ws_data = wb_data.active
         st.success('Data uploaded successfully')
         # Fill into template
         with st.form(key='data_form'):
             st.write('Input First Points Location')
-            point_loc = st.text_area('First Points Location: A18')
+            point_loc = st.text_area('First Points Location: C2')
 
             data_offset = st.text_area('Distance to Absoulte Value: 3')
 
-            points_offset = st.text_area('Distance to Next Point: 9')
+            points_offset = st.text_area('Distance to Next Point: 10')
                         
             submit_button = st.form_submit_button(label='Submit')
         if submit_button:
             st.write('Filling Data into Template')
             # Get First Points
-            first_point = point_loc
+            first_point = str(point_loc)
             offset = int(data_offset)
             points_offset = int(points_offset)
             # Fill data into template
             point = ws_data[first_point]
+            point_value = point.value
             
-            template_wb = load_workbook(output)
+            template_wb = load_workbook('temp.xlsx')
+            
             # TODO: Fill up one sheet first then move to the next sheet
             # TODO: Match the point in template
-
-            while point is not None:
-                data_base_point = template_ws[data_cell_base]   
+            point_count = 0
+            while point_value is not None:
+                # st.write(point_value)
+                sheet_name = str(point_value)
+                
+                template_ws = template_wb[str(point_value)]
+                data_base_point = template_ws[data_cell_base]
+                
+                # if sheet_name in template_wb.sheetnames:
+                #     template_ws = template_wb[str(point_value)]
+                #     data_base_point = template_ws[data_cell_base]
+                # else:
+                #     point = ws_data.cell(row=2, column=point.column + points_offset)
+                #     point_value = point.value
+                #     st.write(point_value)
+                #     point_count += 1
+                       
+                #     continue
 
                 # TODO: Fill the data into the template, 9 points in a row
+                point_count = 0
                 for i in range(10):
                     for j in range(9):
                         # TODO: Use the offset to fill the data
+                        data_cell = ws_data.cell(row=(point.row + point_count), column=point.column + int(data_offset))
+                        # st.write('In data: ', data_cell.row, data_cell.column, data_cell.value)
                         if(j > 5):
                             #TODO:
                             offset_cell = data_base_point.offset(row=i, column=j+template_data_offset * 2)
@@ -181,13 +212,22 @@ if data is not None:
                             offset_cell = data_base_point.offset(row=i, column=j+template_data_offset)
                         else:
                             offset_cell = data_base_point.offset(row=i, column=j)
+                        offset_cell.value = data_cell.value
+                        # st.write('In template: ', offset_cell.row, offset_cell.column, offset_cell.value)
+                        point_count += 1
 
-                # TODO: Record the row number
+                point = ws_data.cell(row=2, column=point.column + points_offset)
+                point_value = point.value
 
-            wb.save('filled_template.xlsx')
+                
             st.write('Data filled successfully')
+            template_wb.save('filled_template.xlsx')
+            with open('filled_template.xlsx', 'rb') as f:
+                download_data = f.read()
+            st.download_button(label='Download Filled Template', data=download_data, mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
 
     except Exception as e:
-        st.error(e)
+        st.error(traceback.format_exc())
         st.stop()
 
