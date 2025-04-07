@@ -75,7 +75,7 @@ if rfq is not None:
                 size.append(cell.value)
                 
                 new_sheet = template.copy_worksheet(original_sheet)
-                new_sheet.title = 'S' + str(cell.value)
+                new_sheet.title = str(cell.value)
                 # Fill the part number
                 new_sheet['E6'] = part_num
                 # Fill the names
@@ -97,7 +97,7 @@ if rfq is not None:
             for cell in form_point:
                 form.append(cell.value)
                 new_sheet = template.copy_worksheet(original_sheet)
-                new_sheet.title = 'F' + str(cell.value)
+                new_sheet.title = str(cell.value)
                 
                 new_sheet['E10'] = operator_name[0]
                 new_sheet['K10'] = operator_name[1]
@@ -118,7 +118,7 @@ if rfq is not None:
             for cell in cruve_point:
                 cruve.append(cell.value)
                 new_sheet = template.copy_worksheet(original_sheet)
-                new_sheet.title = 'C' + str(cell.value)
+                new_sheet.title = str(cell.value)
                 
                 new_sheet['E10'] = operator_name[0]
                 new_sheet['K10'] = operator_name[1]
@@ -182,7 +182,8 @@ if data is not None:
             while point_value is not None:
                 # st.write(point_value)
                 sheet_name = str(point_value)
-                
+
+                st.write(sheet_name)
                 template_ws = template_wb[str(point_value)]
                 data_base_point = template_ws[data_cell_base]
                 
