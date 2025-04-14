@@ -239,22 +239,24 @@ if data is not None:
                 else:
                     results['Acceptable'].append(ws.title)
             # Display the results
-            headers = list(data.keys())
-            for col_index, header in enumerate(headers, start=1):
-                template[result_sheet].cell(row=1, column=col_index, value=header)
+            template[result_sheet]['A1'] = 'Acceptable'
+            template[result_sheet]['A2'] = 'Margin'
+            template[result_sheet]['A3'] = 'Unacceptable'
 
-            # Determine the maximum number of rows needed (based on the longest list).
-            max_rows = max(len(values) for values in data.values())
+            col_index = 2
+            for name in results.get('Acceptable', []):
+                template[result_sheet].cell(row=1, column=col_index, value=name)
+                col_index += 1
+            col_index = 2
+            for name in results.get('Margin', []):
+                template[result_sheet].cell(row=2, column=col_index, value=name)
+                col_index += 1
+            col_index = 2
+            for name in results.get('Unacceptable', []):
+                template[result_sheet].cell(row=3, column=col_index, value=name)
+                col_index += 1
 
-            # Fill in each column with the corresponding values.
-            for row_index in range(1, max_rows + 1):
-                for col_index, header in enumerate(headers, start=1):
-                # Use row_index - 1 because lists are 0-indexed.
-                    try:
-                        cell_value = data[header][row_index - 1]
-                    except IndexError:
-                        cell_value = None  # If this list is shorter, you can leave the cell empty.
-                    template[result_sheet].cell(row=row_index + 1, column=col_index, value=cell_value)
+
 
                 
             st.write('Data filled successfully')
