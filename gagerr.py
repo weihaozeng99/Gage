@@ -219,6 +219,42 @@ if data is not None:
 
                 point = ws_data.cell(row=2, column=point.column + points_offset)
                 point_value = point.value
+            
+            if 'sheet1' in template_wb.sheetnames:
+                template_wb.remove(template_wb['sheet1'])
+            
+            result_sheet = template_wb.create_sheet('Result')
+            result_keys = ['Acceptable', 'Margin', 'Unacceptable']
+            results = {result_key: [] for result_key in result_keys}
+            result_cell = 'T43'
+
+            for ws in template_wb.worksheets:
+                # Get the value of the cell in the current worksheet
+                cell_value = float(ws[result_cell].value)
+                # Store the value in the dictionary with the sheet name as the key
+                if cell_value > 30:
+                    results['Unacceptable'].append(ws.title)
+                elif cell_value > 10:
+                    results['Margin'].append(ws.title)
+                else:
+                    results['Acceptable'].append(ws.title)
+            # Display the results
+            headers = list(data.keys())
+            for col_index, header in enumerate(headers, start=1):
+                template[result_sheet].cell(row=1, column=col_index, value=header)
+
+            # Determine the maximum number of rows needed (based on the longest list).
+            max_rows = max(len(values) for values in data.values())
+
+            # Fill in each column with the corresponding values.
+            for row_index in range(1, max_rows + 1):
+                for col_index, header in enumerate(headers, start=1):
+                # Use row_index - 1 because lists are 0-indexed.
+                    try:
+                        cell_value = data[header][row_index - 1]
+                    except IndexError:
+                        cell_value = None  # If this list is shorter, you can leave the cell empty.
+                    template[result_sheet].cell(row=row_index + 1, column=col_index, value=cell_value)
 
                 
             st.write('Data filled successfully')
